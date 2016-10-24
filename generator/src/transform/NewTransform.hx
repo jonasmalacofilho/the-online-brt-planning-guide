@@ -1,5 +1,6 @@
 package transform;
 
+import haxe.ds.Option;
 import parser.Ast;
 import transform.Context;
 import transform.NewDocument;  // TODO remove
@@ -142,9 +143,9 @@ class NewTransform {
 	static function mkPath(original:String, ?base:String)
 	{
 		assert(original != null);
-		if (haxe.io.Path.isAbsolute(original)) return { original:original, computed:null };
+		if (haxe.io.Path.isAbsolute(original)) return { original:original, computed:None };
 		var computed = base != null ? haxe.io.Path.join([haxe.io.Path.directory(base), original]) : original;
-		return { original:original, computed:haxe.io.Path.normalize(computed) };
+		return { original:original, computed:Some(haxe.io.Path.normalize(computed)) };
 	}
 
 	@:allow(transform.Transform)  // TODO remove

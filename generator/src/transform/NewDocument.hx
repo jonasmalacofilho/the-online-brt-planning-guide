@@ -1,5 +1,6 @@
 package transform;
 
+import haxe.ds.Option;
 import parser.Ast;
 
 // expose the reused definitions from parser.Ast so that downstream users don't
@@ -12,7 +13,7 @@ The delayed validation requires us to keep the original path
 */
 typedef ComputedPath = {
 	original:String,
-	computed:String
+	computed:Option<String>
 }
 
 /*

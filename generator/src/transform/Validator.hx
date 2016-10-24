@@ -62,21 +62,24 @@ class Validator {
 	{
 		if (Path.isAbsolute(path.original)) {
 			errors.push(new ValidationError(pos, AbsolutePath(path.original)));
-			assert(path.computed == null);
+			assert(path.computed.match(None), path);
 			return;
 		}
-		assert(path.computed != null);
 		if (Path.normalize(path.original).startsWith("..")) {
 			errors.push(new ValidationError(pos, EscapingPath(Sys.getCwd(), path.original)));
 			return;
 		}
-		var exists = FileSystem.exists(path.computed);
+		var computed = switch path.computed {
+			case Some(p): p;
+			case None: assert(false, path); return;
+			}
+		var exists = FileSystem.exists(computed);
 		if (!exists) {
-			errors.push(new ValidationError(pos, FileNotFound(path.computed)));
+			errors.push(new ValidationError(pos, FileNotFound(computed)));
 			return;
 		}
-		var isDirectory = FileSystem.isDirectory(path.computed);
-		var ext = Path.extension(path.computed);
+		var isDirectory = FileSystem.isDirectory(computed);
+		var ext = Path.extension(computed);
 		for (t in types) {
 			switch [isDirectory, t, ext.toLowerCase()] {
 			case [true, Directory, _]: return;
@@ -90,9 +93,9 @@ class Validator {
 			}
 		}
 		if (isDirectory)
-			errors.push(new ValidationError(pos, FileIsDirectory(path.computed)));
+			errors.push(new ValidationError(pos, FileIsDirectory(computed)));
 		else
-			errors.push(new ValidationError(pos, WrongFileType(types, path.computed)));
+			errors.push(new ValidationError(pos, WrongFileType(types, computed)));
 	}
 
 	/*
@@ -196,9 +199,13 @@ class Validator {
 				errors.push(new ValidationError(d.pos, AbsolutePath(dest.original)));
 				return;
 			}
-			assert(dest.computed == Path.normalize(dest.computed));
-			if (dest.computed.startsWith(".."))
-				errors.push(new ValidationError(d.pos, EscapingPath("the destination directory", dest.computed)));
+			var computed = switch dest.computed {
+				case Some(p): p;
+				case None: assert(false, dest);
+				}
+			assert(computed == Path.normalize(computed));
+			if (computed.startsWith(".."))
+				errors.push(new ValidationError(d.pos, EscapingPath("the destination directory", computed)));
 		case DHtmlApply(path):
 			validateSrcPath(d.pos, path, [Css]);
 		case DCodeBlock(_), DEmpty:
