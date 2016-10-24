@@ -274,7 +274,7 @@ class Parser {
 		var path = arg(rawHorizontal, cmd, "path");
 		var caption = arg(hlist, cmd, "caption");
 		var copyright = arg(hlist, cmd, "copyright");
-		return mk(Figure(size, mkPath(path.val, path.pos), caption.val, copyright.val), cmd.pos.span(copyright.pos));
+		return mk(Figure(size, path.val, caption.val, copyright.val), cmd.pos.span(copyright.pos));
 	}
 
 	/*
@@ -314,7 +314,7 @@ class Parser {
 				if (path != null) unexpected(peek(), "path already given");
 				var p = arg(rawHorizontal, tag[1], "path");
 				lastPos = p.pos;
-				path = mkPath(p.val, p.pos);
+				path = p.val;
 			case TAt:
 				if (copyright != null) unexpected(peek(), "copyright already given");
 				pop();
@@ -381,7 +381,7 @@ class Parser {
 			var end = pop();  // should have already discarted any vnoise before
 			if (end.def.match(TEof)) unclosed(begin);
 			if (!end.def.match(TCommand("endtable"))) unexpected(end);
-			return mk(ImgTable(size, caption.val, mkPath(path.val, path.pos)), begin.pos.span(end.pos));
+			return mk(ImgTable(size, caption.val, path.val), begin.pos.span(end.pos));
 		} else if (peek().def.match(TCommand("header"))) {
 			var header = tableRow(pop());
 			while (true) {
@@ -473,7 +473,7 @@ class Parser {
 		return mk(Box(name.val, li), begin.pos.span(end.pos));
 	}
 
-	function mkPath(rel:String, pos:Position, allowEmpty=false)
+	function computePath(rel:String, pos:Position, allowEmpty=false)
 	{
 		assert(rel != null);
 		if (rel == "") {
@@ -490,7 +490,7 @@ class Parser {
 	{
 		assert(cmd.def.match(TCommand("include")), cmd);
 		var p = arg(rawHorizontal, cmd);
-		var path = mkPath(p.val, p.pos);
+		var path = computePath(p.val, p.pos);
 		if (!FileSystem.exists(path)) return badValue(p.pos, "File not found or not accessible");
 		if (FileSystem.isDirectory(path)) return badValue(p.pos, "Expected file, but is directory");
 		return parse(path, p.pos, cache);
@@ -517,7 +517,7 @@ class Parser {
 	function targetInclude(cmd:Token)
 	{
 		var p = arg(rawHorizontal, cmd, "source path");
-		var path = mkPath(p.val, p.pos);
+		var path = p.val;
 		return switch cmd.def {
 		case TCommand("apply"): mk(HtmlApply(path), cmd.pos.span(p.pos));
 		case TCommand("preamble"): mk(LaTeXPreamble(path), cmd.pos.span(p.pos));
@@ -530,7 +530,7 @@ class Parser {
 		assert(cmd.def.match(TCommand("export")), cmd);
 		var s = arg(rawHorizontal, cmd, "source path");
 		var d = arg(rawHorizontal, cmd, "destination path");
-		var src = mkPath(s.val, s.pos);
+		var src = s.val;
 		var dest = haxe.io.Path.normalize(d.val);
 		return mk(LaTeXExport(src, dest), cmd.pos.span(d.pos));
 	}

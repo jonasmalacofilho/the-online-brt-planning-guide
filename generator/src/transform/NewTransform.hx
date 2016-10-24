@@ -139,6 +139,14 @@ class NewTransform {
 		}
 	}
 
+	static function mkPath(original:String, ?base:String)
+	{
+		assert(original != null);
+		if (haxe.io.Path.isAbsolute(original)) return { original:original, computed:null };
+		var computed = base != null ? haxe.io.Path.join([haxe.io.Path.directory(base), original]) : original;
+		return { original:original, computed:haxe.io.Path.normalize(computed) };
+	}
+
 	@:allow(transform.Transform)  // TODO remove
 	static function vertical(v:VElem, siblings:Array<VElem>, idc:IdCtx, noc:NoCtx):DElem  // MAYBE rename idc/noc to id/no
 	{
@@ -147,11 +155,11 @@ class NewTransform {
 		assert(v.def != null);
 		switch v.def {
 		case HtmlApply(path):
-			return mkd(DHtmlApply(path), v.pos);
+			return mkd(DHtmlApply(mkPath(path, v.pos.src)), v.pos);
 		case LaTeXPreamble(path):
-			return mkd(DLaTeXPreamble(path), v.pos);
+			return mkd(DLaTeXPreamble(mkPath(path, v.pos.src)), v.pos);
 		case LaTeXExport(src, dst):
-			return mkd(DLaTeXExport(src, dst), v.pos);
+			return mkd(DLaTeXExport(mkPath(src, v.pos.src), mkPath(dst)), v.pos);
 		case MetaReset(name, val):
 			switch name.toLowerCase().trim() {
 			case "volume": noc.lastVolume = val;
@@ -192,7 +200,7 @@ class NewTransform {
 			// figure id could be generated from paths, but let's keep things uniform across elements
 			var id = idc.figure = genId(caption);
 			var no = ++noc.figure;
-			return mkd(DFigure(no, size, path, caption, copyright), v.pos, id);
+			return mkd(DFigure(no, size, mkPath(path, v.pos.src), caption, copyright), v.pos, id);
 		case Table(size, horizontal(_) => caption, header, rows):
 			var id = idc.table = genId(caption);
 			var no = ++noc.table;
@@ -203,7 +211,7 @@ class NewTransform {
 		case ImgTable(size, horizontal(_) => caption, path):
 			var id = idc.table = genId(caption);
 			var no = ++noc.table;
-			return mkd(DImgTable(no, size, caption, path), v.pos, id);
+			return mkd(DImgTable(no, size, caption, mkPath(path, v.pos.src)), v.pos, id);
 		case List(numbered, li):
 			return mkd(DList(numbered, [ for (i in li) vertical(i, siblings, idc, noc) ]), v.pos);
 		case CodeBlock(cte):
@@ -223,8 +231,6 @@ class NewTransform {
 			case _: mkd(DElemList(li), v.pos.span(li[li.length -1 ].pos));
 			}
 		case VEmpty:
-			return mkd(DEmpty, v.pos);
-		case _:  // TODO remove
 			return mkd(DEmpty, v.pos);
 		}
 	}

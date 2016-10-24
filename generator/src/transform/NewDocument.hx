@@ -8,12 +8,20 @@ typedef HElem = parser.HElem;
 typedef BlobSize = parser.BlobSize;
 
 /*
+The delayed validation requires us to keep the original path
+*/
+typedef ComputedPath = {
+	original:String,
+	computed:String
+}
+
+/*
 A document level definition.
 */
 enum DDef {
-	DHtmlApply(path:String);
-	DLaTeXPreamble(path:String);
-	DLaTeXExport(src:String, dest:String);
+	DHtmlApply(path:ComputedPath);
+	DLaTeXPreamble(path:ComputedPath);
+	DLaTeXExport(src:ComputedPath, dest:ComputedPath);
 
 	DVolume(no:Int, name:HElem, children:DElem);
 	DChapter(no:Int, name:HElem, children:DElem);
@@ -21,9 +29,9 @@ enum DDef {
 	DSubSection(no:Int, name:HElem, children:DElem);
 	DSubSubSection(no:Int, name:HElem, children:DElem);
 	DBox(no:Int, name:HElem, children:DElem);
-	DFigure(no:Int, size:BlobSize, path:String, caption:HElem, copyright:HElem);
+	DFigure(no:Int, size:BlobSize, path:ComputedPath, caption:HElem, copyright:HElem);
 	DTable(no:Int, size:BlobSize, caption:HElem, header:Array<DElem>, rows:Array<Array<DElem>>);
-	DImgTable(no:Int, size:BlobSize, caption:HElem, path:String);
+	DImgTable(no:Int, size:BlobSize, caption:HElem, path:ComputedPath);
 	DList(numbered:Bool, li:Array<DElem>);
 	DCodeBlock(cte:String);
 	DQuotation(text:HElem, by:HElem);

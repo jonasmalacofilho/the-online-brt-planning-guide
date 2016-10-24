@@ -167,7 +167,7 @@ class Generator {
 	function genv(v:DElem, idc:IdCtx, noc:NoCtx, bcs:Breadcrumbs)
 	{
 		switch v.def {
-		case DHtmlApply(path):
+		case DHtmlApply({ computed:path }):
 			stylesheets.push(saveAsset(path));
 			return "";
 		case DLaTeXPreamble(_), DLaTeXExport(_):
@@ -272,7 +272,7 @@ class Generator {
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim() + "\n";
-		case DFigure(no, size, path, caption, cright):
+		case DFigure(no, size, { computed:path }, caption, cright):
 			idc.figure = v.id.sure();
 			noc.figure = no;
 			var no = noc.join(false, ".", chapter, figure);
@@ -330,7 +330,7 @@ class Generator {
 				writeRow(r, false);
 			buf.add("</table>\n</section>\n");
 			return buf.toString();
-		case DImgTable(no, size, caption, path):
+		case DImgTable(no, size, caption, { computed:path }):
 			idc.table = v.id.sure();
 			noc.table = no;
 			var no = noc.join(false, ".", chapter, table);
