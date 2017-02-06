@@ -18,10 +18,8 @@ class Main {
 		// parse and locate myselft
 		assert(tocData != null, "toc data is missing");
 		var toc = J(JQuery.parseHTML(tocData));
-		assert(document.URL.startsWith(document.baseURI));
-		var myUrl = document.URL.replace(document.baseURI, "").replace(window.location.hash, "");
-		if (myUrl == "")
-			myUrl = "index.html";
+		var myUrl = J("base#docbase").attr("x-rel-path");
+		assert(myUrl != null, J("base#docbase").length, document.baseURI, document.URL);
 		var me = toc.find('a[href="$myUrl"]').not("#toc-menu").parent();
 		assert(me.length > 0, myUrl);
 		assert(me.is("li"));

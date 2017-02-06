@@ -18,6 +18,11 @@ using StringTools;
 using PositionTools;
 using transform.DocumentTools;
 
+typedef Base = {
+	href:String,
+	path:String
+}
+
 typedef BreadcrumbItem = {
 	no:Int,
 	name:Html,
@@ -142,11 +147,37 @@ class Generator {
 	function saveAsset(src, ?content)
 		return Context.time("html generation (saveAsset)", _saveAsset.bind(src, content));
 
-	@:template function renderHead(title:String, base:String);
+	@:template function renderHead(title:String, base:Base);
 	@:template function renderBreadcrumbs(bcs:Breadcrumbs);  // FIXME
 
-	function openBuffer(title:String, base:String, bcs:Breadcrumbs)
+	/*
+	Compute the <base> element to output for `path`.
+
+	The resulting element should:
+	 - provide a relative `href` attribute pointing to the root URL of the
+	   generated output
+	 - provide a `path` attribute filled with the relative url for the
+	   current page, that can be used in client side javascript to locate
+	   that page within the nav menu
+	*/
+	function computeBase(path)
 	{
+		assert(!Path.isAbsolute(path), "expected relative output path");
+		var cur = Path.normalize(Path.directory(path));
+
+		var base = ["./"];
+		var end = Path.normalize("./");
+		while (cur != end) {
+			base.push("../");
+			cur = Path.normalize(Path.join([cur, "../"]));
+		}
+		return { href:Path.join(base), path:path };
+	}
+
+	function openBuffer(title:String, path:String, bcs:Breadcrumbs)
+	{
+		var base = computeBase(path);
+
 		// TODO get normalize and google fonts with \html\apply or \html\link
 		// TODO get jquery and mathjax with \html\run
 		var buf = new StringBuf();
@@ -186,7 +217,7 @@ class Generator {
 			var path = Path.join(["volume", idc.volume+".html"]);
 			bcs.volume = { no:no, name:new Html(genh(name)), url:path };  // FIXME raw html
 			var title = 'Volume $no: ${genn(name)}';
-			var buf = bufs[path] = openBuffer(title, "..", bcs);
+			var buf = bufs[path] = openBuffer(title, path, bcs);
 			toc.add('<li class="volume">\n${renderToc(no, Std.string(no), new Html(genh(name)), path)}\n<ul>\n');
 			buf.add('
 				<section>
@@ -203,7 +234,7 @@ class Generator {
 			var path = Path.join([idc.chapter, "index.html"]);
 			bcs.chapter = { no:no, name:new Html(genh(name)), url:path };  // FIXME raw html
 			var title = 'Chapter $no: ${genn(name)}';
-			var buf = bufs[path] = openBuffer(title, "..", bcs);
+			var buf = bufs[path] = openBuffer(title, path, bcs);
 			toc.add('<li class="chapter">${renderToc(null, Std.string(noc.chapter), new Html(genh(name)), path)}<ul>\n');
 			buf.add('
 				<section>
@@ -222,7 +253,7 @@ class Generator {
 			var path = Path.join([idc.chapter, idc.section+".html"]);
 			bcs.section = { no:no, name:new Html(genh(name)), url:path };  // FIXME raw html
 			var title = '$lno ${genn(name)}';  // TODO chapter name
-			var buf = bufs[path] = openBuffer(title, "..", bcs);
+			var buf = bufs[path] = openBuffer(title, path, bcs);
 			toc.add('<li class="section">${renderToc(null, lno, new Html(genh(name)), path)}<ul>\n');
 			buf.add('
 				<section>
@@ -413,7 +444,8 @@ class Generator {
 		toc.add('<ul><li class="volume">${renderToc(null, null, "BRT Planning Guide", "index.html")}</li>');
 
 		var contents = genv(doc, new IdCtx(), new NoCtx(), {});  // TODO here for a hack
-		var root = bufs["index.html"] = openBuffer("The Online BRT Planning Guide", ".", {});
+		var rp = "index.html";
+		var root = bufs[rp] = openBuffer("The Online BRT Planning Guide", rp, {});
 		root.add('<section>\n<h1 id="heading" class="brtcolor">${gent("The Online BRT Planning Guide")}</h1>\n');
 		root.add(contents);
 		root.add('</section>\n');

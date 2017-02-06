@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <title>(:title:)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<base href="(:base:)">
+<base id="docbase" href="(:base.href:)" x-rel-path="(:base.path:)">
 <!-- Normalize -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.0.0/normalize.min.css" rel="stylesheet" type="text/css">
 <!-- Jquery -->
