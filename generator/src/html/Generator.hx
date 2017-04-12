@@ -227,7 +227,7 @@ class Generator {
 			toc.add('<li class="volume">\n${renderToc(no, Std.string(no), new Html(genh(name)), url)}\n<ul>\n');
 			buf.add('
 				<section>
-				<h1 id="heading" class="volume${noc.volume}">$no$QUAD${genh(name)}</h1>
+				<a href="${gent(url)}"><h1 id="heading" class="volume${noc.volume}">$no$QUAD${genh(name)}</h1></a>
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim());
@@ -244,7 +244,7 @@ class Generator {
 			toc.add('<li class="chapter">${renderToc(null, Std.string(noc.chapter), new Html(genh(name)), url)}<ul>\n');
 			buf.add('
 				<section>
-				<h2 id="heading" class="volume${noc.volume}">$no$QUAD${genh(name)}</h2>
+				<a href="${gent(url)}"><h2 id="heading" class="volume${noc.volume}">$no$QUAD${genh(name)}</h2></a>
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim());
@@ -263,7 +263,7 @@ class Generator {
 			toc.add('<li class="section">${renderToc(null, lno, new Html(genh(name)), url)}<ul>\n');
 			buf.add('
 				<section>
-				<h3 id="heading" class="volume${noc.volume}">$lno$QUAD${genh(name)}</h3>
+				<a href="${gent(url)}"><h3 id="heading" class="volume${noc.volume}">$lno$QUAD${genh(name)}</h3></a>
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim());
@@ -276,10 +276,11 @@ class Generator {
 			noc.subSection = no;
 			var lno = noc.join(false, ".", chapter, section, subSection);
 			var id = idc.join(false, "/", subSection);
-			toc.add('<li>${renderToc(null, lno, new Html(genh(name)), bcs.section.url+"#"+id)}<ul>\n');
+			var url = bcs.section.url+"#"+id;
+			toc.add('<li>${renderToc(null, lno, new Html(genh(name)), url)}<ul>\n');
 			var html = '
 				<section>
-				<h4 id="$id" class="volume${noc.volume}">$lno$QUAD${genh(name)}</h4>
+				<a href="${gent(url)}"><h4 id="$id" class="volume${noc.volume}">$lno$QUAD${genh(name)}</h4></a>
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim() + "\n";
@@ -290,9 +291,10 @@ class Generator {
 			noc.subSubSection = no;
 			var lno = noc.join(false, ".", chapter, section, subSection, subSubSection);
 			var id = idc.join(false, "/", subSection, subSubSection);
+			var url = bcs.section.url+"#"+id;
 			var html = '
 				<section>
-				<h5 id="$id" class="volume${noc.volume}">$lno$QUAD${genh(name)}</h5>
+				<a href="${gent(url)}"><h5 id="$id" class="volume${noc.volume}">$lno$QUAD${genh(name)}</h5></a>
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim() + "\n";
@@ -303,6 +305,7 @@ class Generator {
 			noc.box = no;
 			var no = noc.join(false, ".", chapter, box);
 			var id = idc.join(true, ":", box);
+			var url = (bcs.section != null ? bcs.section : bcs.chapter).url+"#"+id;  // FIXME handle chapter == null
 			var sz = TextWidth;
 			function autoSize(d:DElem) {
 				if (d.def.match(DTable(_, FullWidth|MarginWidth, _) | DFigure(_, FullWidth|MarginWidth, _)))
@@ -313,7 +316,7 @@ class Generator {
 			var size = sizeToClass(sz);
 			return '
 				<section class="box $size">
-				<h1 id="$id" class="volume${noc.volume}">Box $no <em>${genh(name)}</em></h1>
+				<a href="${gent(url)}"><h1 id="$id" class="volume${noc.volume}">Box $no <em>${genh(name)}</em></h1></a>
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim() + "\n";
@@ -325,19 +328,20 @@ class Generator {
 			noc.figure = no;
 			var no = noc.join(false, ".", chapter, figure);
 			var id = idc.join(true, ":", figure);
+			var url = (bcs.section != null ? bcs.section : bcs.chapter).url+"#"+id;  // FIXME handle chapter == null
 			if (Context.dinossaurFigures) {
 				return '
-					<section class="img-block ${sizeToClass(size)}">
+					<section id="$id" class="img-block ${sizeToClass(size)}">
 					<a><img src="$DRAFT_IMG_PLACEHOLDER" class="overlay-trigger"/></a>
-					<p id="$id"><strong>Fig. $no</strong>$QUAD${genh(caption)} <em>$DRAFT_IMG_PLACEHOLDER_COPYRIGHT</em></p>
+					<a href="${gent(url)}"><h5><strong>Fig. $no</strong>$QUAD${genh(caption)} <em>$DRAFT_IMG_PLACEHOLDER_COPYRIGHT</em></h5></a>
 					</section>
 				'.doctrim() + "\n";
 			} else {
 				var p = saveAsset(path);
 				return '
-					<section class="img-block ${sizeToClass(size)}">
+					<section id="$id" class="img-block ${sizeToClass(size)}">
 					<a><img src="$p" class="overlay-trigger"/></a>
-					<p id="$id"><strong>Fig. $no</strong>$QUAD${genh(caption)} <em>${genh(cright)}</em></p>
+					<a href="${gent(url)}"><h5><strong>Fig. $no</strong>$QUAD${genh(caption)} <em>${genh(cright)}</em></h5>
 					</section>
 				'.doctrim() + "\n";
 			}
@@ -346,6 +350,7 @@ class Generator {
 			noc.table = no;
 			var no = noc.join(false, ".", chapter, table);
 			var id = idc.join(true, ":", table);
+			var url = (bcs.section != null ? bcs.section : bcs.chapter).url+"#"+id;  // FIXME handle chapter == null
 			var buf = new StringBuf();
 			function writeCell(cell:DElem, header:Bool)
 			{
@@ -368,7 +373,7 @@ class Generator {
 			}
 			buf.add('
 				<section class="${sizeToClass(size)}">
-				<h5 id="$id">Table $no$QUAD${genh(caption)}</h5>
+				<a href="${gent(url)}"><h5 id="$id">Table $no$QUAD${genh(caption)}</h5></a>
 				<table>
 			'.doctrim());
 			buf.add("\n<thead>");
@@ -383,10 +388,11 @@ class Generator {
 			noc.table = no;
 			var no = noc.join(false, ".", chapter, table);
 			var id = idc.join(true, ":", table);
+			var url = (bcs.section != null ? bcs.section : bcs.chapter).url+"#"+id;  // FIXME handle chapter == null
 			if (Context.dinossaurFigures) {
 				return '
 					<section class="img-block ${sizeToClass(size)}">
-					<h5 id="$id">Table $no$QUAD${genh(caption)} <em>$DRAFT_IMG_PLACEHOLDER_COPYRIGHT</em></h5>
+					<a href="${gent(url)}"><h5 id="$id">Table $no$QUAD${genh(caption)} <em>$DRAFT_IMG_PLACEHOLDER_COPYRIGHT</em></h5></a>
 					<a><img src="$DRAFT_IMG_PLACEHOLDER" class="overlay-trigger"/></a>
 					</section>
 				'.doctrim() + "\n";
@@ -394,7 +400,7 @@ class Generator {
 				var p = saveAsset(path);
 				return '
 					<section class="img-block ${sizeToClass(size)}">
-					<h5 id="$id">Table $no$QUAD${genh(caption)}</h5>
+					<a href="${gent(url)}"><h5 id="$id">Table $no$QUAD${genh(caption)}</h5></a>
 					<a><img src="$p" class="overlay-trigger"/></a>
 					</section>
 				'.doctrim() + "\n";
