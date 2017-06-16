@@ -112,17 +112,15 @@ length can be used as a proxy for the passenger capacity of a rail car. Passenge
 North American light rail cars range from 1.5 to 2.4 passengers per foot of car length (5.0 to 8.0 *p/m 
 *length). The lower level of 1.5 passengers per foot length (5.0 *p/m *length)-with a standing space 
 per passenger of 4.3 ft\sup{2} (0.4 m\sup{2})-corresponds to a standing load without body contact, while the upper 
-level provides 3.2 ft2 (0.3 m\sup{2}), corresponding to a standing load with some body contact.}{TCSQM, p. 8-66}
+level provides 3.2 ft2 (0.3 m\sup{2}), corresponding to a standing load with some body contact.
 
-\quotation{
 For heavy rail, the 75-ft (23-m) cars used in more than twelve U.S. and Canadian cities range from 
 2.1 to 3.5 passengers per foot of car length (7.0 to 11.5 p/m of car length). The higher end of this 
 range approaches crush-loaded conditions.
-}{\emph{continued}}
 
-\quotation{
 A reduction by 0.3 p/ft length (1.0 p/m length) should be used for smaller, narrower 
-cars *(1).*}{\emph{continued}}
+cars *(1).*}
+{TCSQM, p. 8-66}
 
 Table 2.5 uses eight passengers per meter of length to estimate the passenger capacity of a rail car.
 
