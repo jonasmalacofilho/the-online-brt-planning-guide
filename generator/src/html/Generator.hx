@@ -160,10 +160,32 @@ class Generator {
 	@:template function renderHead(title:String, base:String, relPath:String);
 	@:template function renderBreadcrumbs(bcs:Breadcrumbs, relPath:String);  // FIXME
 
-	function openBuffer(title:String, bcs:Breadcrumbs, url:String)
+	var reserved = new StringBuf();
+
+	function urlToPath(url:String)
 	{
 		assert(Path.removeTrailingSlashes(url) == Path.normalize(url) || url == ROOT_URL, url);
-		var path = Path.normalize(url.endsWith("/") ? Path.join([url, "index.html"]) : Path.withExtension(url, "html"));
+		return Path.normalize(url.endsWith("/") ? Path.join([url, "index.html"]) : Path.withExtension(url, "html"));
+	}
+
+	function reserveBuffer(url:String)
+	{
+		var path = urlToPath(url);
+		assert(!bufs.exists(path) || bufs[path] == reserved, bufs[path].toString());
+		bufs[path] = reserved;
+	}
+
+	function unreserveBuffer(url:String)
+	{
+		var path = urlToPath(url);
+		assert(bufs[path] == reserved, bufs[path].toString());
+		assert(bufs[path].toString().length == 0, bufs[path].toString());
+		bufs.remove(path);
+	}
+
+	function openBuffer(title:String, bcs:Breadcrumbs, url:String)
+	{
+		var path = urlToPath(url);
 		var depth = path.split("/").length - 1;
 		var computedBase = depth > 0 ? [ for (i in 0...depth) ".." ].join("/") : ".";
 		// TODO get normalize and google fonts with \html\head
@@ -175,8 +197,12 @@ class Generator {
 		buf.add(renderHead(title, computedBase, url));
 		buf.add("<body>\n");
 		buf.add(renderBreadcrumbs(bcs, url));  // FIXME
-		buf.add('<div class="container">\n<div class="col-text">\n');
-		assert(!bufs.exists(path));
+		buf.add('<div class="container">\n');
+		buf.add('<nav id="action:navigate"><span id="toc-loading">Loading the table of contents...</span></nav>\n');
+		buf.add('<div class="search"><input type="text" placeholder="Search..." name="search" id="input-search"></div>\n');
+		buf.add('<script type="text/javascript"> $(document).ready(function() { $("#input-search").keyup(function (e) { var kc = e.keyCode || e.which; if (kc == 13) { $("#input-search").addClass("button-search"); window.location.href = "/search?search=" + this.value; } }); });</script>\n');
+		buf.add('<div class="col-text">\n');
+		assert(!bufs.exists(path), path, "reserved or already used path");
 		bufs[path] = buf;
 		return buf;
 	}
@@ -228,7 +254,7 @@ class Generator {
 			toc.add('<li class="volume">\n${renderToc(no, "Volume " + no, new Html(genh(name)), url)}\n<ul>\n');
 			buf.add('
 				<section>
-				<h1 id="heading" class="volume${noc.volume}">$no$QUAD${genh(name)}</h1>
+				<div class="volumehead v${noc.volume}"><h1 id="heading" class="volume${noc.volume}">$no$QUAD${genh(name)}</h1></div>
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim());
@@ -245,7 +271,7 @@ class Generator {
 			toc.add('<li class="chapter">${renderToc(null, "Chapter " + noc.chapter, new Html(genh(name)), url)}<ul>\n');
 			buf.add('
 				<section>
-				<h2 id="heading" class="volume${noc.volume}">$no$QUAD${genh(name)}</h2>
+				<h1 id="heading" class="volume${noc.volume}">$no$QUAD${genh(name)}</h1>
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim());
@@ -264,7 +290,7 @@ class Generator {
 			toc.add('<li class="section">${renderToc(null, lno, new Html(genh(name)), url)}<ul>\n');
 			buf.add('
 				<section>
-				<h3 id="heading" class="volume${noc.volume}">$lno$QUAD${genh(name)}</h3>
+				<h1 id="heading" class="volume${noc.volume}">$lno$QUAD${genh(name)}</h1>
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim());
@@ -280,7 +306,7 @@ class Generator {
 			toc.add('<li>${renderToc(null, lno, new Html(genh(name)), bcs.section.url+"#"+id)}<ul>\n');
 			var html = '
 				<section>
-				<h4 id="$id" class="volume${noc.volume}">$lno$QUAD${genh(name)}</h4>
+				<h2 id="$id" class="volume${noc.volume} share">$lno$QUAD${genh(name)}</h2>
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim() + "\n";
@@ -293,7 +319,7 @@ class Generator {
 			var id = idc.join(false, "/", subSection, subSubSection);
 			var html = '
 				<section>
-				<h5 id="$id" class="volume${noc.volume}">$lno$QUAD${genh(name)}</h5>
+				<h3 id="$id" class="volume${noc.volume} share">$lno$QUAD${genh(name)}</h3>
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim() + "\n";
@@ -314,34 +340,24 @@ class Generator {
 			var size = sizeToClass(sz);
 			return '
 				<section class="box $size">
-				<h1 id="$id" class="volume${noc.volume}">Box $no <em>${genh(name)}</em></h1>
+				<h3 id="$id" class="volume${noc.volume} share">Box $no <em>${genh(name)}</em></h3>
 				${genv(children, idc, noc, bcs)}
 				</section>
 			'.doctrim() + "\n";
 		case DTitle(name):
-			// FIXME
-			return genv({ def:DParagraph({ def:Highlight(name), pos:v.pos }), pos:v.pos, id:v.id }, idc, noc, bcs);
+			return '<h3>${genh(name)}</h3>';
 		case DFigure(no, size, _.toInputPath() => path, caption, cright):
 			idc.figure = v.id.sure();
 			noc.figure = no;
 			var no = noc.join(false, ".", chapter, figure);
 			var id = idc.join(true, ":", figure);
-			if (Context.dinossaurFigures) {
-				return '
-					<section class="img-block ${sizeToClass(size)}">
-					<a><img src="$DRAFT_IMG_PLACEHOLDER" class="overlay-trigger"/></a>
-					<p id="$id"><strong>Fig. $no</strong>$QUAD${genh(caption)} <em>$DRAFT_IMG_PLACEHOLDER_COPYRIGHT</em></p>
-					</section>
-				'.doctrim() + "\n";
-			} else {
-				var p = saveAsset(path);
-				return '
-					<section class="img-block ${sizeToClass(size)}">
-					<a><img src="$p" class="overlay-trigger"/></a>
-					<p id="$id"><strong>Fig. $no</strong>$QUAD${genh(caption)} <em>${genh(cright)}</em></p>
-					</section>
-				'.doctrim() + "\n";
-			}
+			var p = saveAsset(path);
+			return '
+				<figure class="img-block ${sizeToClass(size)}" id="$id">
+				<a><img src="$p" class="overlay-trigger" alt="Fig. $no ${genn(caption)}"/></a>
+				<figcaption class="share"><strong>Fig. $no</strong>$QUAD${genh(caption)} <em>${genh(cright)}</em></figcaption>
+				</figure>
+			'.doctrim() + "\n";
 		case DTable(no, size, caption, header, rows):
 			idc.table = v.id.sure();
 			noc.table = no;
@@ -369,7 +385,7 @@ class Generator {
 			}
 			buf.add('
 				<section class="${sizeToClass(size)}">
-				<h5 id="$id">Table $no$QUAD${genh(caption)}</h5>
+				<h3 id="$id" class="share">Table $no$QUAD${genh(caption)}</h3>
 				<table>
 			'.doctrim());
 			buf.add("\n<thead>");
@@ -384,22 +400,13 @@ class Generator {
 			noc.table = no;
 			var no = noc.join(false, ".", chapter, table);
 			var id = idc.join(true, ":", table);
-			if (Context.dinossaurFigures) {
-				return '
-					<section class="img-block ${sizeToClass(size)}">
-					<h5 id="$id">Table $no$QUAD${genh(caption)} <em>$DRAFT_IMG_PLACEHOLDER_COPYRIGHT</em></h5>
-					<a><img src="$DRAFT_IMG_PLACEHOLDER" class="overlay-trigger"/></a>
-					</section>
-				'.doctrim() + "\n";
-			} else {
-				var p = saveAsset(path);
-				return '
-					<section class="img-block ${sizeToClass(size)}">
-					<h5 id="$id">Table $no$QUAD${genh(caption)}</h5>
-					<a><img src="$p" class="overlay-trigger"/></a>
-					</section>
-				'.doctrim() + "\n";
-			}
+			var p = saveAsset(path);
+			return '
+				<figure class="img-block ${sizeToClass(size)}">
+				<h3 id="$id" class="share">Table $no$QUAD${genh(caption)}</h3>
+				<a><img src="$p" class="overlay-trigger" alt="Table $no ${genn(caption)}"/></a>
+				</figure>
+			'.doctrim() + "\n";
 		case DList(numbered, li):
 			var buf = new StringBuf();
 			var tag = numbered ? "ol" : "ul";
@@ -454,6 +461,12 @@ class Generator {
 		srcCache = new Map();  // TODO abstract
 		lastSrcId = 0;
 
+
+		for (keyword in ["assets", "volume"])
+			reserveBuffer(keyword);
+		reserveBuffer(ROOT_URL);  // temporary due to ordering constraints
+		reserveBuffer(TOC_URL);  // temporary due to ordering constraints
+
 		// `toc.add` and `genv` ordering is relevant
 		// it's necessary to process all `\html\head` before actually opening buffers and writing heads
 		toc = new StringBuf();
@@ -462,6 +475,10 @@ class Generator {
 					<ul><li class="index">${renderToc(null, null, "BRT Planning Guide", ROOT_URL)}</li>
 				'.doctrim());
 		var contents = genv(doc, new IdCtx(), new NoCtx(), {});
+
+		// remove temporary constraints
+		for (url in [ROOT_URL, TOC_URL])
+			unreserveBuffer(url);
 
 		// now we're ready to open toc as a proper buffer
 		var tmp = toc.toString();
@@ -474,14 +491,19 @@ class Generator {
 		root.add('</section>\n');
 		// TODO tt, commit in downloads, chapter download
 		toc.add('
+			<a class="close" href="#">&#x2715;</a>
 			<li class="nav toc-link"><a href="$TOC_URL">View all content</a></li>
 			<li class="nav"><a href="pdf/the-brt-planning-guide.pdf">Download in PDF</a></li>
 			<li class="nav"><a href="https://github.com/ITDP/the-online-brt-planning-guide" target="_blank">Contribute now</a></li>
-			<li class="nav">
-			<a href="#action:more-options">Other options</a>
-				<ul class="target" id="action:more-options">
-				<li><a href="../" target="_blank">Extra files</a></li>
-				</ul>
+			<li class="nav"><a href="../" target="_blank">Extra files</a></li>
+			<li class="nav github">
+				${DateTools.format(Date.fromTime(Main.version.commit_timestamp*1000), "%b %d %Y")} | <a href="https://github.com/ITDP/the-online-brt-planning-guide/commit/${Main.version.fullCommit}">#${Main.version.commit}</a>
+			${(Context.branch != null && Context.branch.length > 0 && Context.gh_user != null && Context.branch != "master") ?
+				'<br><a href="https://github.com/${Context.gh_user}/the-online-brt-planning-guide/tree/${Context.branch}">${Context.gh_user}:${Context.branch}</a>' : ''}
+			${(Context.pullRequest != null && Context.pullRequest.length > 0 && Std.parseInt(Context.pullRequest) != null) ?
+				'| <a href="https://github.com/ITDP/the-online-brt-planning-guide/pull/${Context.pullRequest}">#${Context.pullRequest}</a>' : ""}
+			${(Context.tag != null && Context.tag.length > 0) ? 
+				'| <a>${Context.tag}</a>' : ""}
 			</li>
 		'.doctrim());
 		toc.add("\n</ul></div>");
@@ -502,10 +524,11 @@ class Generator {
 
 		for (p in bufs.keys()) {
 			var b = bufs[p];
+			if (b == reserved)
+				continue;
+
 			if (p.endsWith(".html")) {
-				b.add("</div>\n");
-				b.add('<nav id="action:navigate"><span id="toc-loading">Loading the table of contents...</span></nav>\n');
-				b.add("</div>\n");
+				b.add("</div>\n</div>\n");  // div.col-text & div.container
 				b.add('<script src="$script"></script>');
 				b.add('<div class="data-src-map" data-href="$srcMapPath"></div>\n');
 				if (glId != null && glId != "") {

@@ -2,8 +2,8 @@
 <meta charset="utf-8">
 <title>(:title:)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<base href="(:base:)" id="docbase" x-rel-path="(:relPath:)">
-<link ref="canonical" href="(:relPath:)">
+<base href="(:base:)" id="docbase">
+<link rel="canonical" href="(:relPath:)">
 <!-- Jquery -->
 <script src = "https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js" ></script>
 <!-- MathJax -->
@@ -12,6 +12,18 @@
 <!-- BEWARE when testing: if you use MathJax menu to set the trigger, it overrides the settings in the menuSettings... if necessary, remove the mjx.menu cookie -->
 <script type="text/x-mathjax-config">
 MathJax.Hub.Config({
+  CommonHTML: {
+		mtextFontInherit: true,
+    linebreaks: { automatic: true }
+  },
+  "HTML-CSS": {
+		mtextFontInherit: true,
+    linebreaks: { automatic: true }
+  },
+  SVG: {
+		mtextFontInherit: true,
+    linebreaks: { automatic: true }
+  },
   tex2jax: {
     ignoreClass: ".+",
     processClass: "mathjax"

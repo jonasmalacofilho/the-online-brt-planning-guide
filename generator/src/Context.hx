@@ -10,15 +10,19 @@ class Context {
 	public static var googleAnalyticsId = env["GL_ANALYTICS_UA_ID"];
 	public static var assetUrlPrefix = env["ASSET_URL_PREFIX"];
 	public static var assetServer = env["ASSET_SERVER"];
+	public static var tag = env["TAG"];
+
+	//public static var gh_user = env["GH_USER"];
+	public static var pullRequest = env["PULL_REQUEST"];
+	public static var branch = env["BASE_BRANCH"];
+	public static var gh_user = env["GH_USER"];
+
 
 	public static var debug = enabled("DEBUG");
 	public static var draft = enabled("DRAFT");
 	@:isVar public static var noMathValidation(get,set) = enabled("DRAFT_NO_MATH_VALIDATION");
 		static function get_noMathValidation() return draft || noMathValidation;
 		static function set_noMathValidation(flag) return noMathValidation = flag;
-	@:isVar public static var dinossaurFigures(get,set) = enabled("DRAFT_DINOSSAUR_FIGURES");
-		static function get_dinossaurFigures() return draft || dinossaurFigures;
-		static function set_dinossaurFigures(flag) return dinossaurFigures = flag;
 	public static var texNoPositions = enabled("TEX_NO_POSITIONS");
 
 	public static var timer = new Map<String,Float>();
